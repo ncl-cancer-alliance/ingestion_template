@@ -9,6 +9,10 @@ data_dir = "screening/local/"
 table_name = "SCREENING_LOCAL"
 skip_rows = 1
 
+#Optional fields
+field_delimiter = '\t'
+encoding = "UTF-16LE"
+
 [table.demo.columns]
 "Organisation Code" = "VARCHAR"
 "Organisation Name" = "VARCHAR"
@@ -17,8 +21,8 @@ skip_rows = 1
 "Cohort Age Range" = "VARCHAR"
 "Cohort Description" = "VARCHAR"
 "Denominator Name" = "VARCHAR"
-"Denominator" = "NUMBER"
-"Numerator" = "NUMBER"
+"Denominator" = "VARCHAR"
+"Numerator" = "VARCHAR"
 "Performance" = "VARCHAR"
 "Acceptable" = "VARCHAR"
 "Achievable" = "VARCHAR"
