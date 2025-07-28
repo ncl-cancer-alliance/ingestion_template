@@ -80,7 +80,8 @@ def stage(file_path):
     check=True)
 
 def ingest_csv(file_name, destination_table, columns, 
-               custom_columns=False, skip_rows=1):
+               custom_columns=False, 
+               skip_rows=1, field_delimiter=',', encoding="UTF-8"):
     """
     Ingest a given file
     """
@@ -108,6 +109,8 @@ def ingest_csv(file_name, destination_table, columns,
         "destination_table": destination_table,
         "stage_name": "LOADING_STAGE",
         "skip_rows": skip_rows,
+        "field_delimiter": field_delimiter,
+        "encoding": encoding,
         "columns": column_list,
         "column_definitions": column_definitions,
 
@@ -118,6 +121,8 @@ def ingest_csv(file_name, destination_table, columns,
 
     # Render the template
     rendered_sql = template.render(**params)
+
+    print(rendered_sql)
 
     # --- Connect to Snowflake ---
     conn = snowflake.connector.connect(
@@ -195,6 +200,17 @@ for ds in datasets:
     rel_path = f"./data/{config["table"][ds]["data_dir"]}"
     target_file = get_target_file(rel_path, file_ext)
 
+    #Get any optional fields in the toml
+    if "field_delimiter" in config["table"][ds]:
+        field_delimiter = config["table"][ds]["field_delimiter"]
+    else:
+        field_delimiter = ','
+
+    if "encoding" in config["table"][ds]:
+        encoding = config["table"][ds]["encoding"]
+    else:
+        encoding = "UTF-8"
+
     if target_file:
 
         #Cleanse the file name as unusual filenames can mess with the staging sql
@@ -216,7 +232,9 @@ for ds in datasets:
                 destination_table=config["table"][ds]["table_name"], 
                 columns=config["table"][ds]["columns"],
                 custom_columns=custom_columns,
-                skip_rows=config["table"][ds]["skip_rows"]
+                skip_rows=config["table"][ds]["skip_rows"],
+                field_delimiter=field_delimiter,
+                encoding=encoding
             )
 
         if getenv("ARCHIVE_FILES") == "true":
