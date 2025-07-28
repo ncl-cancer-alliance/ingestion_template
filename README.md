@@ -22,6 +22,8 @@ You still need to set up the project as usual as depicted in the [Internal Scrip
 
 Create a .env file using the sample.env file as a reference. Some fields are left blank and can be filled in using the Account Details section on the Snowflake website.
 
+Before running the code, any named schema and database in the .env file must be created in snowflake first.
+
 Replace the demo example in the config.toml with details of your pipeline(s). Each pipeline should include the following:
 * Be listed with a name under [base][datasets]
 * Have dataset specific information under [table.{Your Dataset}] (e.g. [table.demo] for the demo dataset)

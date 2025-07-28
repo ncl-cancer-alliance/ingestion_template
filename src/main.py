@@ -97,6 +97,10 @@ def ingest_csv(file_name, destination_table, columns,
         custom_column_definitions = ", " + ",\n  ".join(
             [f'"{col}" {custom_columns[col]["type"]}' for col in custom_columns.keys()]
         )
+    else:
+        custom_column_list = ""
+        custom_column_values = ""
+        custom_column_definitions = ""
 
     params = {
         "file_name": file_name,
@@ -215,7 +219,14 @@ for ds in datasets:
                 skip_rows=config["table"][ds]["skip_rows"]
             )
 
-        #Archive the source file if successful to prevent reuploading data
-        os.rename(os.path.abspath(rel_path + target_file),
-                  os.path.abspath(f"./data/archive/{config["table"][ds]["data_dir"]}/{target_file}"))
+        if getenv("ARCHIVE_FILES") == "true":
+            #Archive the source file if successful to prevent reuploading data
+            archive_dir = os.path.abspath(
+                f"./data/archive/{config["table"][ds]["data_dir"]}/")
+            
+            if os.path.exists(archive_dir) == False:
+                os.makedirs(archive_dir)
+
+            os.rename(os.path.abspath(rel_path + target_file),
+                    os.path.join(archive_dir, target_file))
         
