@@ -1,0 +1,151 @@
+CREATE OR REPLACE PROCEDURE "INGEST_EXCEL_FROM_STAGE"(
+    "STAGE_NAME" string
+  , "FILE_NAME" string
+  , "SHEET_NAME" string
+  , "DESTINATION_TABLE" string
+  , "DESTINATION_SCHEMA" string
+  , "DESTINATION_DATABASE" string
+  , "OVERWRITE_FLAG" boolean
+)
+  copy grants
+  returns table()
+  language python
+  runtime_version = '3.12'
+  packages = ('snowflake-snowpark-python', 'pandas', 'openpyxl')
+  handler = 'main'
+  execute as caller
+AS
+$$
+
+# Import module for inbound Snowflake session
+from snowflake.snowpark import session as snowpark_session
+from snowflake.snowpark.files import SnowflakeFile
+from snowflake.snowpark.functions import fl_get_scoped_file_url
+
+# Other imports
+import pandas as pd
+
+# Define function to get scoped URL for file
+def get_scoped_url(
+      snowflake_session: snowpark_session
+    , destination_stage: str
+    , destination_file_path: str
+  ):
+  
+  ## Generate presigned URL
+  sf_df_scoped_url = snowflake_session.sql(f'''
+      select build_scoped_file_url(@{destination_stage}, '{destination_file_path}') as "SCOPED_URL"
+    ''')
+
+  scoped_url = sf_df_scoped_url.collect()[0]["SCOPED_URL"]
+  
+  return scoped_url
+
+def ingest_file_into_dataframe(
+      snowflake_session: snowpark_session
+    , stage_name: str
+    , file_name: str
+    , sheet_name: str
+  ) -> pd.DataFrame:
+  """
+  Ingests an Excel file into a pandas DataFrame.
+  
+  Parameters:
+  - snowflake_session: Snowpark Session object
+  - stage_name: str, name of the Snowflake stage where the file is stored
+  - file_name: str, name of the Excel file to read
+  - sheet_name: str, name of the sheet to read
+  
+  Returns:
+  - df: pandas DataFrame containing the data from the specified sheet
+  """
+
+  # Get the scoped file URL by querying Snowflake
+  scoped_file_url = get_scoped_url(
+      snowflake_session = snowflake_session
+    , destination_stage = stage_name
+    , destination_file_path = file_name
+  )
+  
+  with SnowflakeFile.open(scoped_file_url, "rb") as f:  
+    df = pd.read_excel(f, sheet_name=sheet_name)
+
+  return df
+
+def upload_dataframe_to_snowflake(
+      snowflake_session: snowpark_session
+    , df: pd.DataFrame 
+    , destination_table: str
+    , destination_schema: str
+    , destination_database: str
+    , overwrite_flag: bool = False
+  ):
+  """
+  Uploads a pandas DataFrame to a Snowflake table.
+  
+  Parameters:
+  - df: pandas DataFrame to upload
+  - destination_table: str, name of the destination table
+  - destination_schema: str, name of the destination schema
+  - destination_database: str, name of the destination database
+  - snowflake_session: Snowpark Session object
+  """
+  snowflake_session.write_pandas(
+      df
+    , destination_table  # Destination table name
+    , database = destination_database  # Destination database
+    , schema = destination_schema  # Destination schema
+    , overwrite = overwrite_flag  # Overwrite the table if it exists
+    , auto_create_table = auto_create_table_flag # Appends if False
+  )
+
+def main(
+      snowflake_session: snowpark_session
+    , stage_name: str
+    , file_name: str
+    , sheet_name: str
+    , destination_table: str
+    , destination_schema: str
+    , destination_database: str 
+    , overwrite_flag: bool = False
+  ):
+    
+  ### Ingest Excel file into pandas DataFrame
+  df_raw = ingest_file_into_dataframe(
+      snowflake_session = snowflake_session
+    , stage_name = stage_name
+    , file_name = file_name
+    , sheet_name = sheet_name
+  )
+
+  ### Upload the DataFrame to Snowflake
+  upload_dataframe_to_snowflake(
+      snowflake_session = snowflake_session
+    , df = df_raw
+    , destination_table = destination_table
+    , destination_schema = destination_schema
+    , destination_database = destination_database
+    , overwrite_flag = True
+  )
+
+  ### Validate the upload by querying the table
+  sf_df = snowflake_session.table(f'"{destination_database}"."{destination_schema}"."{destination_table}"')
+  
+  return sf_df
+
+$$;
+
+---------------------------
+-- Execute the procedure to ingest the Excel file
+
+call "INGEST_EXCEL_FROM_STAGE"(
+    "STAGE_NAME" => "{{ stage_name }}"
+  , "FILE_NAME" => "{{ file_name }}"
+  , "SHEET_NAME" => "{{ sheet_name }}"
+  , "DESTINATION_TABLE" => "{{ destination_table }}"
+  , "DESTINATION_SCHEMA" => "{{ destination_schema }}"
+  , "DESTINATION_DATABASE" => "{{ destination_database }}"
+  , "OVERWRITE_FLAG" => TRUE
+  , "AUTO_CREATE_TABLE_FLAG" => FALSE
+)
+;

@@ -1,28 +1,12 @@
-# NCL Cancer Alliance Project Template
+# NCL Cancer Alliance Ingestion Template
 
-This git repository contains a shell that should be used as the default structure for new projects
-in the analytical team.  It won't fit all circumstances perfectly, and you can make changes and issue a 
-pull request for new features / changes.
+This is an alternative template used to create ingestion pipelines for snowflake.
 
-The aim of this template is two-fold: firstly to give a common structure for analytical projects to aid
-reproducibility, secondly to allow for additional security settings as default to prevent accidental upload of files that should not be committed to Git and GitHub.
+Currently this template only works with csv files.
 
 __Please update/replace this README file with one relevant to your project__
 
-## To use this template, please use the following practises:
-
-* Put any data files in the `data` folder.  This folder is explicitly named in the .gitignore file.  A further layer of security is that all xls, xlsx, csv and pdf files are also explicit ignored in the whole folder as well.  ___If you need to commit one of these files, you must use the `-f` (force) command in `commit`, but you must be sure there is no identifiable data.__
-* Save any documentation in the `docs` file.  This does not mean you should avoid commenting your code, but if you have an operating procedure or supporting documents, add them to this folder.
-* Please save all output: data, formatted tables, graphs etc. in the output folder.  This is also implicitly ignored by git, but you can use the `-f` (force) command in `commit` to add any you wish to publish to github.
-
-
-### Please also consider the following:
-* Linting your code.  This is a formatting process that follows a rule set.  We broadly encourage the tidyverse standard, and recommend the `lintr` package.
-* Comment your code to make sure others can follow.
-* Consider your naming conventions: we recommend `snake case` where spaces are replaced by underscores and no capitals are use. E.g. `outpatient_referral_data`
-
-
-This repository is dual licensed under the [Open Government v3]([https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) & MIT. All code can outputs are subject to Crown Copyright.
+Refer to the generic project template for standard best practice: [Link](https://github.com/ncl-cancer-alliance/nclca_template/blob/main/README.md)
 
 ## Scripting Guidance
 
@@ -30,27 +14,37 @@ Please refer to the Internal Scripting Guide documentation for instructions on s
 
 The Internal Scripting Guide is available here: [Internal Scripting Guide](https://nhs.sharepoint.com/:w:/r/sites/msteams_38dd8f/Shared%20Documents/Document%20Library/Documents/Git%20Integration/Internal%20Scripting%20Guide.docx?d=wc124f806fcd8401b8d8e051ce9daab87&csf=1&web=1&e=qt05xI)
 
+## Usage
+
+For a new ingestion pipeline, create a new repository project on git hub and select ncl-cancer-alliance/ingestion_template as the "Repository template".
+
+You still need to set up the project as usual as depicted in the [Internal Scripting Guide](https://nhs.sharepoint.com/:w:/r/sites/msteams_38dd8f/Shared%20Documents/Document%20Library/Documents/Git%20Integration/Internal%20Scripting%20Guide.docx?d=wc124f806fcd8401b8d8e051ce9daab87&csf=1&web=1&e=qt05xI).
+
+Create a .env file using the sample.env file as a reference. Some fields are left blank and can be filled in using the Account Details section on the Snowflake website.
+
+Replace the demo example in the config.toml with details of your pipeline(s). Each pipeline should include the following:
+* Be listed with a name under [base][datasets]
+* Have dataset specific information under [table.{Your Dataset}] (e.g. [table.demo] for the demo dataset)
+  * These settings include:
+    * file_ext (file extension): csv or otherwise
+    * data_dir: Where in the data directory your data files for this dataset will be stored
+    * table_name: Destination table for your ingestion (the database and schema is chosen in the .env file)
+    * skip_rows: What row the data header is in the source file
+* Contain column information in [table.{Your Dataset}.columns] (e.g. [table.demo.columns] for the demo dataset)
+  * Each item in this section should contain the column name and data type (e.g. "Organisation" = "VARCHAR" defines a column called Organisation with the VARCHAR data type)
+
+When the src/main.py code is executed, all data files found in the corresponding data_dir locations as specified in the config.toml will be ingested into Snowflake. For example, with the default demo settings, all csv files in data/demo/ will be processed.
+
+The ingested data will have a _TIMESTAMP column appended for logging and debugging purposes.
+
+### Custom Processing
+There is dedicated space in the main.py script to add custom code for specific ingestion pipelines. For example adding user specified labels or hardcoded values not in the data file itself.
+
 ## Changelog
 
-### [1.0.0] - 2025-04-08
-#### Added
-- Initial release of the project template
-
-### [1.1.0] - 2025-05-15
-#### Added
-- Added sample.env file to the template
-#### Modified
-- Added toml to requirements.txt file
-
-### [1.1.1] - 2025-05-28
-#### Modified
-- References to the NCL ICB scripting documentation have been replaced with the internal documentation.
-
-### [1.2.0] - 2025-07-17
-#### Added
-- Updated requirements.txt to better support snowflake packages
-
-*The contents and structure of this template were largely based on the template used by the NCL ICB Analytics team available here: [NCL ICB Project Template](https://github.com/ncl-icb-analytics/ncl_project)*
+### [1.0.0] - 2025-07-28
+- Initial release of the ingestion template
+- Capable of ingestion pipelines using csv files
 
 ## Licence
 This repository is dual licensed under the [Open Government v3]([https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) & MIT. All code can outputs are subject to Crown Copyright.

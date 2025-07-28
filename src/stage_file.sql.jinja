@@ -1,0 +1,22 @@
+---------------------------
+-- Environment
+
+use role "{{ role }}";
+use secondary roles NONE;
+use database "{{ database }}";
+use schema "{{ schema }}";
+
+---------------------------
+-- Create the stage that will hold the file
+
+create or alter stage "{{ stage_name }}"
+  directory = (enable = true)
+;
+
+-- Upload dummy file
+PUT
+  '{{ file_path }}'
+  @"{{ stage_name }}"
+  auto_compress={{ auto_compress | default("false") }}
+  overwrite={{ overwrite | default("true") }}
+;

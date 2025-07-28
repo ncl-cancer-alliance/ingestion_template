@@ -1,5 +1,21 @@
-title = "MY PROJECT"
+[base]
+datasets = ["demo"]
 
-[database]
-sql_dsn = "SANDPIT"
-sql_database = "Data_Lab_NCL_Dev"
+[table]
+
+[table.demo]
+file_ext = "csv"
+data_dir = "demo/"
+table_name = "destination_table"
+skip_rows = 1
+
+[table.ccr_004.columns]
+"Organisation" = "VARCHAR"
+"CDB" = "VARCHAR"
+"Population Count" = "NUMBER"
+"Parent" = "NUMBER"
+"%" = "VARCHAR"
+"Males" = "NUMBER"
+"Females" = "NUMBER"
+"Excluded" = "NUMBER"
+"Status" = "VARCHAR"

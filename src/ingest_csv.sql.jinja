@@ -1,0 +1,32 @@
+-- Create the staging table
+CREATE TABLE IF NOT EXISTS "{{staging_table}}" (
+  {{column_definitions}}
+);
+
+COPY INTO "{{staging_table}}" (
+  {{columns}}
+)
+FROM @{{stage_name}}/{{file_name}}
+FILE_FORMAT = (
+  TYPE = 'CSV' 
+  FIELD_OPTIONALLY_ENCLOSED_BY = '"' 
+  SKIP_HEADER = {{skip_rows}}
+);
+
+-- Create the destination table
+CREATE TABLE IF NOT EXISTS "{{destination_table}}" (
+  {{column_definitions}}
+  {{custom_column_definitions}}
+  ,_TIMESTAMP TIMESTAMP_NTZ(9) DEFAULT CURRENT_TIMESTAMP()
+);
+
+INSERT INTO "{{destination_table}}" (
+  {{columns}}
+  {{custom_column_list}}
+)
+SELECT
+  {{columns}}
+  {{custom_column_values}}
+FROM "{{staging_table}}";
+
+DROP TABLE IF EXISTS "{{staging_table}}";
