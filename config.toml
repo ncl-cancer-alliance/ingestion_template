@@ -5,17 +5,20 @@ datasets = ["demo"]
 
 [table.demo]
 file_ext = "csv"
-data_dir = "demo/"
-table_name = "destination_table"
+data_dir = "screening/local/"
+table_name = "SCREENING_LOCAL"
 skip_rows = 1
 
-[table.ccr_004.columns]
-"Organisation" = "VARCHAR"
-"CDB" = "VARCHAR"
-"Population Count" = "NUMBER"
-"Parent" = "NUMBER"
-"%" = "VARCHAR"
-"Males" = "NUMBER"
-"Females" = "NUMBER"
-"Excluded" = "NUMBER"
-"Status" = "VARCHAR"
+[table.demo.columns]
+"Organisation Code" = "VARCHAR"
+"Organisation Name" = "VARCHAR"
+"Programme" = "VARCHAR"
+"Month of Date" = "VARCHAR"
+"Cohort Age Range" = "VARCHAR"
+"Cohort Description" = "VARCHAR"
+"Denominator Name" = "VARCHAR"
+"Denominator" = "NUMBER"
+"Numerator" = "NUMBER"
+"Performance" = "VARCHAR"
+"Acceptable" = "VARCHAR"
+"Achievable" = "VARCHAR"
