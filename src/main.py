@@ -10,7 +10,7 @@ from jinja2 import Environment, FileSystemLoader
 
 ################################################################################
 
-def get_target_file(dir, ext):
+def get_target_file(dir, ext, multi=False):
 
     """
     Return the file from the specified dir with the matching file extenstion
@@ -18,6 +18,7 @@ def get_target_file(dir, ext):
     inputs:
     - dir: String containing the path to the directory
     - ext: String containing the file extenstion
+    - multi: Boolean, if true then multiple files can be returned
     """
 
     files = [f for f in os.listdir(dir) if (
@@ -26,18 +27,18 @@ def get_target_file(dir, ext):
 
     if files == []:
         print(f"No {ext} files found in {dir}.")
-        return False
+        return []
 
-    if len(files) > 1:
+    if len(files) > 1 and not multi:
         print(files)
         print(f"Multiple {ext} files found in {dir}. Please remove unrelated files.")
-        return False
+        return []
     
-    return files[0]
+    return files
 
-def cleanse_source_file(ds, dir, filename):
+def cleanse_source_file(ds, dir, filename, suffix=""):
     src = os.path.abspath(dir + filename)
-    dst = os.path.abspath(dir + ds + ".csv")
+    dst = os.path.abspath(dir + ds + "_" + suffix + ".csv")
 
     os.rename(src, dst)
 
@@ -121,8 +122,7 @@ def ingest_csv(file_name, destination_table, columns,
 
     # Render the template
     rendered_sql = template.render(**params)
-
-    print(rendered_sql)
+    #print(rendered_sql)
 
     # --- Connect to Snowflake ---
     conn = snowflake.connector.connect(
@@ -139,7 +139,7 @@ def ingest_csv(file_name, destination_table, columns,
     cur = conn.cursor()
     try:
         cur.execute(rendered_sql, num_statements=5)
-        print("Ingestion completed.")
+        print("Ingestion completed.\n")
     finally:
         cur.close()
         conn.close()
@@ -193,12 +193,14 @@ custom_columns = False
 #Process each dataset indivdually
 for ds in datasets:
 
-    print(f"\nProcessing {ds} data:")
+    print(f"\nProcessing {ds} data:\n")
 
     #Get the latest data file
     file_ext = config["table"][ds]["file_ext"]
     rel_path = f"./data/{config["table"][ds]["data_dir"]}"
-    target_file = get_target_file(rel_path, file_ext)
+
+    multi_files = getenv("MULTI_FILES") == "true"
+    target_files = get_target_file(rel_path, file_ext, multi_files)
 
     #Get any optional fields in the toml
     if "field_delimiter" in config["table"][ds]:
@@ -211,21 +213,23 @@ for ds in datasets:
     else:
         encoding = "UTF-8"
 
-    if target_file:
+    for suffix, target_file in enumerate(target_files):
+
+        target_id = f"{ds}_{str(suffix)}"
 
         #Cleanse the file name as unusual filenames can mess with the staging sql
-        if target_file != f"{ds}.csv":
-            cleanse_source_file(ds, rel_path, target_file)
-            target_file = f"{ds}.csv"
+        if target_file != f"{target_id}.csv":
+            cleanse_source_file(ds, rel_path, target_file, str(suffix))
+            target_file = f"{target_id}.csv"
 
         file_path = os.path.abspath(rel_path + target_file).replace("\\", "/")
 
         #Stage the file
-        print(f"Staging {ds} data...")
+        print(f"Staging {target_id} data...")
         stage(file_path)
 
         #Ingest the staged file into a table
-        print(f"Ingesting the {ds} data")
+        print(f"Ingesting the {target_id} data...")
         if file_ext == "csv":
             ingest_csv(
                 target_file, 
