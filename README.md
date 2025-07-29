@@ -48,6 +48,10 @@ There is dedicated space in the main.py script to add custom code for specific i
 - Initial release of the ingestion template
 - Capable of ingestion pipelines using csv files
 
+### [1.1.0] - 2025-07-29
+- Can archive data files after processing with ARCHIVE_FILES setting in .env
+- Can process multiple csv files for a dataset with MULTI_FILES setting in .env
+
 ## Licence
 This repository is dual licensed under the [Open Government v3]([https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) & MIT. All code can outputs are subject to Crown Copyright.
 

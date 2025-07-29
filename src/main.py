@@ -139,7 +139,7 @@ def ingest_csv(file_name, destination_table, columns,
     cur = conn.cursor()
     try:
         cur.execute(rendered_sql, num_statements=5)
-        print("Ingestion completed.")
+        print("Ingestion completed.\n")
     finally:
         cur.close()
         conn.close()
@@ -193,7 +193,7 @@ custom_columns = False
 #Process each dataset indivdually
 for ds in datasets:
 
-    print(f"\nProcessing {ds} data:")
+    print(f"\nProcessing {ds} data:\n")
 
     #Get the latest data file
     file_ext = config["table"][ds]["file_ext"]
@@ -215,19 +215,21 @@ for ds in datasets:
 
     for suffix, target_file in enumerate(target_files):
 
+        target_id = f"{ds}_{str(suffix)}"
+
         #Cleanse the file name as unusual filenames can mess with the staging sql
-        if target_file != f"{ds}_{str(suffix)}.csv":
+        if target_file != f"{target_id}.csv":
             cleanse_source_file(ds, rel_path, target_file, str(suffix))
-            target_file = f"{ds}_{str(suffix)}.csv"
+            target_file = f"{target_id}.csv"
 
         file_path = os.path.abspath(rel_path + target_file).replace("\\", "/")
 
         #Stage the file
-        print(f"Staging {ds} data...")
+        print(f"Staging {target_id} data...")
         stage(file_path)
 
         #Ingest the staged file into a table
-        print(f"Ingesting the {ds} data")
+        print(f"Ingesting the {target_id} data...")
         if file_ext == "csv":
             ingest_csv(
                 target_file, 
