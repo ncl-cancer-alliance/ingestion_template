@@ -5,24 +5,24 @@ datasets = ["demo"]
 
 [table.demo]
 file_ext = "csv"
-data_dir = "screening/local/"
-table_name = "SCREENING_LOCAL"
+data_dir = "demo/" #This means the code will look for data in ./data/demo/
+table_name = "SCREENING_LOCAL" #Destination table name. Will use schema and database specified in .env
 skip_rows = 1
 
-#Optional fields
-field_delimiter = '\t'
-encoding = "UTF-16LE"
+#Optional fields for different csv types
+#field_delimiter = '\t'
+#encoding = "UTF-16LE"
 
 [table.demo.columns]
 "Organisation Code" = "VARCHAR"
 "Organisation Name" = "VARCHAR"
 "Programme" = "VARCHAR"
-"Month of Date" = "VARCHAR"
+"Month of Date" = "DATE"
 "Cohort Age Range" = "VARCHAR"
 "Cohort Description" = "VARCHAR"
 "Denominator Name" = "VARCHAR"
-"Denominator" = "VARCHAR"
-"Numerator" = "VARCHAR"
-"Performance" = "VARCHAR"
-"Acceptable" = "VARCHAR"
-"Achievable" = "VARCHAR"
+"Denominator" = "NUMBER"
+"Numerator" = "NUMBER"
+"Performance" = "FLOAT"
+"Acceptable" = "FLOAT"
+"Achievable" = "FLOAT"
